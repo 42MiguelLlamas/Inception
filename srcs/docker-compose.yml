@@ -1,56 +1,54 @@
+
 services:
-  # NGINX container (TLSv1.2 and TLSv1.3 only)
-  nginx:
-    build:
-      context: ./requirements/nginx  # Ruta de construcción desde la carpeta nginx
-    container_name: nginx
-    restart: always
-    ports:
-      - "443:443"  # Exponer puerto 443 para HTTPS
+  mariadb:
+    image: custom-mariadb
+    container_name: mariadb
     volumes:
-      - ./ssl:/etc/ssl/certs:ro  # Ruta para certificados SSL
-      - ./requirements/wordpress:/var/www/html  # Enlace a los archivos de WordPress
+      - wp-db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=1234
     networks:
-      - backend
+      - wpnet
+    restart: always
 
-  # WordPress container (with PHP-FPM)
   wordpress:
-    build:
-      context: ./requirements/wordpress  # Ruta de construcción desde la carpeta wordpress
+    image: custom-wordpress
     container_name: wordpress
-    restart: always
-    environment:
-      WORDPRESS_DB_HOST: db:3306  # Conectar a MariaDB
-      WORDPRESS_DB_USER: wp_user
-      WORDPRESS_DB_PASSWORD: wp_pass
-      WORDPRESS_DB_NAME: wordpress
     volumes:
-      - wordpress_data:/var/www/html  # Enlace a los archivos de WordPress
+      - wp-web:/var/www/html
+    depends_on:
+      - mariadb
     networks:
-      - backend
-    expose:
-      - "9000"  # Exponer el puerto PHP-FPM internamente
+      - wpnet
+    restart: always
 
-  # MariaDB container
-  db:
-    build:
-      context: ./requirements/mariadb  # Ruta de construcción desde la carpeta mariadb
-    container_name: db
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: example  # Establecer la contraseña root
-      MYSQL_DATABASE: wordpress
-      MYSQL_USER: wp_user
-      MYSQL_PASSWORD: wp_pass
+  nginx:
+    image: custom-nginx
+    container_name: nginx
     volumes:
-      - wordpress_db:/var/lib/mysql  # Enlace a la base de datos de WordPress
+      - wp-web:/var/www/html
+    ports:
+      - "443:443"
+    depends_on:
+      - wordpress
     networks:
-      - backend
+      - wpnet
+    restart: always
 
 volumes:
-  wordpress_data:  # Volumen para los archivos de WordPress
-  wordpress_db:    # Volumen para la base de datos de MariaDB
+  wp-db:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/tu_login/data/db
+      o: bind
+
+  wp-web:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/tu_login/data/wp
+      o: bind
 
 networks:
-  backend:
-    driver: bridge  # Red personalizada para comunicación entre contenedores
+  wpnet:

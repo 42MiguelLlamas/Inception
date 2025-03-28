@@ -1,0 +1,20 @@
+# Archivos Docker
+*.log
+*.pid
+*.sock
+
+# Volúmenes
+/home/*/data/*
+!*/Dockerfile
+
+# Certificados
+*.pem
+*.crt
+*.key
+
+# Entornos virtuales, cachés
+__pycache__/
+*.pyc
+
+# VSCode
+.vscode/
