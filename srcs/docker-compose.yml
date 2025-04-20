@@ -3,10 +3,9 @@ services:
   mariadb:
     image: custom-mariadb
     container_name: mariadb
+    env_file: ../.env
     volumes:
       - wp-db:/var/lib/mysql
-    environment:
-      - MYSQL_ROOT_PASSWORD=1234
     networks:
       - wpnet
     restart: always
@@ -40,15 +39,16 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /home/tu_login/data/db
+      device: /home/maikel/data/db
       o: bind
 
   wp-web:
     driver: local
     driver_opts:
       type: none
-      device: /home/tu_login/data/wp
+      device: /home/maikel/data/wp
       o: bind
 
 networks:
   wpnet:
+    driver: bridge

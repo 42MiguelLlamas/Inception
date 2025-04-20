@@ -1,17 +1,18 @@
 FROM debian:bullseye
 
-ENV DEBIAN_FRONTEND=noninteractive
-
 RUN apt-get update && \
     apt-get install -y mariadb-server && \
-    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /var/run/mysqld && \
+COPY ./conf/init.sh /docker-entrypoint-initdb.d/init.sh
+
+RUN mkdir -p /var/lib/mysql /var/run/mysqld && \
     chown -R mysql:mysql /var/run/mysqld /var/lib/mysql
+
+COPY ./conf/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 3306
 
-VOLUME ["/var/lib/mysql"]
-
-CMD ["mysqld"]
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["mysqld_safe"]
